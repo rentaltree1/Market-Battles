@@ -1,1 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Battles</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
+<!-- =================================================== AUTH SCREEN -->
+<section id="screen-auth" class="screen active">
+  <div class="auth-card">
+    <h1 class="brand">Market Battles</h1>
+    <p class="brand-tag">Run your company. Bots are watching.</p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Log in</button>
+      <button class="tab" data-tab="signup">Sign up</button>
+    </div>
+
+    <form id="form-login" class="auth-form active">
+      <input type="text" name="username" placeholder="Username" autocomplete="username" required />
+      <input type="password" name="password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="btn primary">Log in</button>
+      <p class="err" id="login-err"></p>
+    </form>
+
+    <form id="form-signup" class="auth-form">
+      <input type="text" name="username" placeholder="Username (3-20 chars)" autocomplete="username" required />
+      <input type="password" name="password" placeholder="Password" autocomplete="new-password" required />
+      <input type="email" name="email" placeholder="Email (optional)" autocomplete="email" />
+      <button type="submit" class="btn primary">Create account</button>
+      <p class="err" id="signup-err"></p>
+    </form>
+  </div>
+</section>
+
+<!-- =================================================== SETUP SCREEN -->
+<section id="screen-setup" class="screen">
+  <div class="setup-card">
+    <h2>Found your company</h2>
+    <p class="muted">Pick a ticker and a sector. You'll IPO at $15/share.</p>
+
+    <form id="form-setup">
+      <label>Ticker (2-5 letters)</label>
+      <input type="text" name="ticker" maxlength="5" placeholder="e.g. TREE" required />
+
+      <label>Sector</label>
+      <div class="sector-grid">
+        <label class="sector-card">
+          <input type="radio" name="sector" value="tech" checked />
+          <span class="sector-name">Tech</span>
+          <span class="sector-desc">Servers, engineers, product launches</span>
+        </label>
+        <label class="sector-card disabled">
+          <input type="radio" name="sector" value="health" disabled />
+          <span class="sector-name">Health <span class="badge">Phase 2</span></span>
+          <span class="sector-desc">Clinical trials, FDA approvals</span>
+        </label>
+        <label class="sector-card disabled">
+          <input type="radio" name="sector" value="energy" disabled />
+          <span class="sector-name">Energy <span class="badge">Phase 2</span></span>
+          <span class="sector-desc">Drilling, oil, renewables</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn primary">IPO at $15</button>
+      <p class="err" id="setup-err"></p>
+    </form>
+  </div>
+</section>
+
+<!-- =================================================== DASHBOARD SCREEN -->
+<section id="screen-dash" class="screen">
+  <header class="topbar">
+    <div class="ticker-block">
+      <div class="ticker-sym" id="my-ticker">—</div>
+      <div class="ticker-sector muted" id="my-sector">—</div>
+    </div>
+    <div class="market-state">
+      <span class="dot" id="market-dot"></span>
+      <span id="market-text">—</span>
+    </div>
+    <button class="btn ghost small" id="btn-logout">Log out</button>
+  </header>
+
+  <main class="dash">
+
+    <!-- Price + chart -->
+    <div class="card price-card">
+      <div class="price-row">
+        <div class="price-current" id="my-price">$15.00</div>
+        <div class="price-change" id="my-change">+0.00 (0.00%)</div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 800 240" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="range-tabs">
+        <button class="rtab active" data-range="1d">1D</button>
+        <button class="rtab" data-range="1m">1M</button>
+        <button class="rtab" data-range="1y">1Y</button>
+        <button class="rtab" data-range="all">ALL</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card stats-card">
+      <div class="stat"><div class="stat-label">Cash</div><div class="stat-val" id="stat-cash">$0</div></div>
+      <div class="stat"><div class="stat-label">Market cap</div><div class="stat-val" id="stat-mcap">$0</div></div>
+      <div class="stat"><div class="stat-label">Revenue / min</div><div class="stat-val" id="stat-rev">$0</div></div>
+      <div class="stat"><div class="stat-label">Costs / min</div><div class="stat-val" id="stat-cost">$0</div></div>
+      <div class="stat"><div class="stat-label">Net / min</div><div class="stat-val" id="stat-net">$0</div></div>
+      <div class="stat"><div class="stat-label">Nasdaq</div><div class="stat-val" id="stat-nas">0.00%</div></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card actions-card">
+      <h3>CEO actions</h3>
+      <div class="actions" id="actions-list">
+        <!-- filled by JS -->
+      </div>
+      <div class="active-boosts" id="active-boosts"></div>
+    </div>
+
+    <!-- News feed -->
+    <div class="card feed-card">
+      <h3>News</h3>
+      <ul class="feed" id="news-feed"></ul>
+    </div>
+
+    <!-- Trader feed -->
+    <div class="card feed-card">
+      <h3>Trader feed</h3>
+      <ul class="feed" id="trade-feed"></ul>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="card leaderboard-card">
+      <h3>Market</h3>
+      <table class="lb" id="leaderboard">
+        <thead>
+          <tr><th>Ticker</th><th>Price</th><th>24h</th><th>Mkt cap</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+</section>
+
+<!-- =================================================== BANKRUPT MODAL -->
+<div id="bankrupt-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>You're delisted.</h2>
+    <p class="muted">Your company went bankrupt. Game over.</p>
+    <button class="btn primary" id="btn-restart">Start over with a new ticker</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
