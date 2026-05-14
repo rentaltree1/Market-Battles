@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Market Battles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================================ WELCOME SCREEN -->
+<section id="screen-welcome" class="screen active">
+  <div class="bg-stars"></div>
+  <div class="welcome-card">
+    <div class="welcome-hero">
+      <svg class="hero-art" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#a855f7"/>
+            <stop offset="100%" stop-color="#3b0764"/>
+          </linearGradient>
+          <linearGradient id="line1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#22d3ee"/>
+            <stop offset="100%" stop-color="#a855f7"/>
+          </linearGradient>
+          <linearGradient id="line2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#f472b6"/>
+            <stop offset="100%" stop-color="#a855f7"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="200" fill="url(#g1)" />
+        <circle cx="320" cy="50" r="35" fill="#fde047" opacity="0.18" />
+        <circle cx="320" cy="50" r="20" fill="#fde047" opacity="0.3" />
+        <!-- chart lines -->
+        <path d="M0 160 Q60 140 100 130 T200 100 T300 70 T400 30" fill="none" stroke="url(#line1)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M0 180 Q70 170 120 160 T230 130 T340 110 T400 90" fill="none" stroke="url(#line2)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+        <!-- candlesticks -->
+        <g opacity="0.6">
+          <rect x="40"  y="120" width="6" height="30" fill="#22d3ee"/>
+          <rect x="70"  y="110" width="6" height="40" fill="#22d3ee"/>
+          <rect x="100" y="100" width="6" height="35" fill="#f472b6"/>
+          <rect x="130" y="90"  width="6" height="45" fill="#22d3ee"/>
+          <rect x="160" y="85"  width="6" height="30" fill="#22d3ee"/>
+          <rect x="190" y="75"  width="6" height="40" fill="#22d3ee"/>
+          <rect x="220" y="80"  width="6" height="20" fill="#f472b6"/>
+          <rect x="250" y="60"  width="6" height="35" fill="#22d3ee"/>
+        </g>
+      </svg>
+    </div>
+    <div class="welcome-body">
+      <h1 class="welcome-title">Market Battles</h1>
+      <p class="welcome-sub">You're the company. Bots are watching.</p>
+      <ul class="feature-list">
+        <li><span class="check">✓</span> Real-time market with real Nasdaq influence</li>
+        <li><span class="check">✓</span> Whale bots react to news + your moves</li>
+        <li><span class="check">✓</span> Build assets, launch products, survive costs</li>
+        <li><span class="check">✓</span> Bankrupt = game over</li>
+      </ul>
+      <button class="btn btn-primary btn-large" id="btn-play">Play Now</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ AUTH SCREEN -->
+<section id="screen-auth" class="screen">
+  <div class="bg-stars"></div>
+  <div class="auth-card">
+    <button class="back-link" id="auth-back">← back</button>
+    <h2 class="card-title">Sign in to play</h2>
+
+    <div id="google-signin-wrap" class="google-wrap" style="display:none">
+      <div id="google-btn"></div>
+      <div class="divider"><span>or</span></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Log in</button>
+      <button class="tab" data-tab="signup">Sign up</button>
+    </div>
+
+    <form id="form-login" class="auth-form active">
+      <input type="text" name="username" placeholder="Username" autocomplete="username" required />
+      <input type="password" name="password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="btn btn-primary">Log in</button>
+      <p class="err" id="login-err"></p>
+    </form>
+
+    <form id="form-signup" class="auth-form">
+      <input type="text" name="username" placeholder="Username (3-20 chars)" autocomplete="username" required />
+      <input type="password" name="password" placeholder="Password" autocomplete="new-password" required />
+      <input type="email" name="email" placeholder="Email (optional)" autocomplete="email" />
+      <button type="submit" class="btn btn-primary">Create account</button>
+      <p class="err" id="signup-err"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ============================================ HQ GLOBE SCREEN -->
+<section id="screen-hq" class="screen">
+  <div id="globeViz"></div>
+  <div class="hq-top">
+    <h2 class="hq-title">Pick your HQ</h2>
+    <p class="hq-sub">Tap anywhere on Earth to plant your company's flag.</p>
+  </div>
+  <div class="hq-bottom">
+    <div class="hq-picked" id="hq-picked">
+      <span class="hq-flag">📍</span>
+      <span id="hq-label">No location yet — tap the globe</span>
+    </div>
+    <button class="btn btn-primary btn-large" id="btn-confirm-hq" disabled>Confirm HQ</button>
+  </div>
+</section>
+
+<!-- ============================================ SETUP SCREEN -->
+<section id="screen-setup" class="screen">
+  <div class="bg-stars"></div>
+  <div class="setup-card">
+    <h2 class="card-title">Found your company</h2>
+    <p class="muted">Pick a ticker and a sector. You'll IPO at $15/share.</p>
+
+    <form id="form-setup">
+      <label class="form-label">Ticker (2-5 letters)</label>
+      <input type="text" name="ticker" maxlength="5" placeholder="e.g. TREE" required class="ticker-input" />
+
+      <label class="form-label">Sector</label>
+      <div class="sector-grid">
+        <label class="sector-card">
+          <input type="radio" name="sector" value="tech" checked />
+          <span class="sector-emoji">💻</span>
+          <span class="sector-name">Tech</span>
+          <span class="sector-desc">Servers, engineers, launches</span>
+        </label>
+        <label class="sector-card disabled">
+          <input type="radio" name="sector" value="health" disabled />
+          <span class="sector-emoji">⚕️</span>
+          <span class="sector-name">Health <span class="badge">Phase 2</span></span>
+          <span class="sector-desc">Trials, FDA approvals</span>
+        </label>
+        <label class="sector-card disabled">
+          <input type="radio" name="sector" value="energy" disabled />
+          <span class="sector-emoji">⚡</span>
+          <span class="sector-name">Energy <span class="badge">Phase 2</span></span>
+          <span class="sector-desc">Drilling, oil, renewables</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-large">IPO at $15</button>
+      <p class="err" id="setup-err"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ============================================ DASHBOARD -->
+<section id="screen-dash" class="screen">
+  <header class="topbar">
+    <div class="ticker-block">
+      <div class="ticker-sym" id="my-ticker">—</div>
+      <div class="ticker-sub">
+        <span id="my-sector" class="ticker-sector">—</span>
+        <span class="dot-sep">·</span>
+        <span class="hq-mini" id="my-hq">—</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="market-state">
+        <span class="dot" id="market-dot"></span>
+        <span id="market-text">—</span>
+      </div>
+      <button class="btn btn-ghost btn-small" id="btn-logout">Log out</button>
+    </div>
+  </header>
+
+  <main class="dash">
+
+    <div class="card price-card">
+      <div class="price-row">
+        <div class="price-current" id="my-price">$15.00</div>
+        <div class="price-change" id="my-change">+0.00 (0.00%)</div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 800 240" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="range-tabs">
+        <button class="rtab active" data-range="1d">1D</button>
+        <button class="rtab" data-range="1m">1M</button>
+        <button class="rtab" data-range="1y">1Y</button>
+        <button class="rtab" data-range="all">ALL</button>
+      </div>
+    </div>
+
+    <div class="card stats-card">
+      <div class="stat"><div class="stat-label">Cash</div><div class="stat-val" id="stat-cash">$0</div></div>
+      <div class="stat"><div class="stat-label">Market cap</div><div class="stat-val" id="stat-mcap">$0</div></div>
+      <div class="stat"><div class="stat-label">Revenue / min</div><div class="stat-val" id="stat-rev">$0</div></div>
+      <div class="stat"><div class="stat-label">Costs / min</div><div class="stat-val" id="stat-cost">$0</div></div>
+      <div class="stat"><div class="stat-label">Net / min</div><div class="stat-val" id="stat-net">$0</div></div>
+      <div class="stat"><div class="stat-label">Nasdaq</div><div class="stat-val" id="stat-nas">0.00%</div></div>
+    </div>
+
+    <div class="card actions-card">
+      <h3>CEO actions</h3>
+      <div class="actions" id="actions-list"></div>
+      <div class="active-boosts" id="active-boosts"></div>
+    </div>
+
+    <div class="card feed-card">
+      <h3>News</h3>
+      <ul class="feed" id="news-feed"></ul>
+    </div>
+
+    <div class="card feed-card">
+      <h3>Trader feed</h3>
+      <ul class="feed" id="trade-feed"></ul>
+    </div>
+
+    <div class="card leaderboard-card">
+      <h3>Market</h3>
+      <table class="lb" id="leaderboard">
+        <thead>
+          <tr><th>Ticker</th><th>Price</th><th>24h</th><th>Mkt cap</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+</section>
+
+<!-- ============================================ BANKRUPT MODAL -->
+<div id="bankrupt-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-emoji">📉</div>
+    <h2>You're delisted.</h2>
+    <p class="muted">Your company went bankrupt. Game over.</p>
+    <button class="btn btn-primary" id="btn-restart">Start over with a new ticker</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/globe.gl@2.32.5/dist/globe.gl.min.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
