@@ -10,6 +10,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,6 +34,10 @@ const STARTING_SHARES = 1_000_000;
 const STARTING_OP_COST_PER_MIN = 100;       // operating costs at minute 0
 const OP_COST_GROWTH_PER_DAY = 0.02;        // costs scale +2% per real day
 const MAX_HISTORY_POINTS = 50000;           // hard cap on price history per player
+
+// Google Sign-In (optional). Set GOOGLE_CLIENT_ID env var on Render to enable.
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || null;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 // =============================================================
 // GAME STATE (in memory; persisted to data.json)
@@ -158,10 +163,13 @@ app.post('/api/signup', async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 8);
   state.users[username] = {
     username,
+    displayName: username,
     email: email || null,
+    googleId: null,
     passwordHash,
     ticker: null,
     sector: null,
+    hq: null,                    // { lat, lng, city, country }
     cash: STARTING_CASH,
     shares: STARTING_SHARES,
     stockPrice: STARTING_PRICE,
@@ -182,12 +190,85 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body || {};
   const u = state.users[username];
   if (!u) return res.status(401).json({ error: 'no such user' });
+  if (!u.passwordHash) return res.status(401).json({ error: 'this account uses Google sign-in' });
   const ok = await bcrypt.compare(password, u.passwordHash);
   if (!ok) return res.status(401).json({ error: 'wrong password' });
 
   const token = makeToken();
   state.sessions[token] = username;
   res.json({ token, username });
+});
+
+// Public client config — exposes whether Google sign-in is available
+app.get('/api/config', (req, res) => {
+  res.json({ googleClientId: GOOGLE_CLIENT_ID });
+});
+
+// Google Sign-In handler. Verifies Google's ID token, creates/loads user.
+app.post('/api/google-login', async (req, res) => {
+  if (!googleClient) return res.status(400).json({ error: 'Google sign-in not configured on server' });
+  const { credential } = req.body || {};
+  if (!credential) return res.status(400).json({ error: 'missing credential' });
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload.sub;
+
+    // Find existing user with this googleId
+    let existing = Object.values(state.users).find(u => u.googleId === googleId);
+    if (!existing) {
+      // Generate unique username from name/email
+      const base = (payload.email || payload.name || 'player').split('@')[0]
+        .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 14) || 'player';
+      let username = base, n = 0;
+      while (state.users[username]) { n++; username = `${base}${n}`; }
+
+      existing = state.users[username] = {
+        username,
+        displayName: payload.name || username,
+        email: payload.email || null,
+        googleId,
+        passwordHash: null,
+        ticker: null,
+        sector: null,
+        hq: null,
+        cash: STARTING_CASH,
+        shares: STARTING_SHARES,
+        stockPrice: STARTING_PRICE,
+        priceHistory: [{ t: Date.now(), p: STARTING_PRICE }],
+        assets: {},
+        activeBoosts: [],
+        sentimentMod: 0,
+        bankrupt: false,
+        createdAt: Date.now(),
+      };
+    }
+
+    const token = makeToken();
+    state.sessions[token] = existing.username;
+    res.json({ token, username: existing.username });
+  } catch (e) {
+    console.error('[google-login]', e.message);
+    res.status(401).json({ error: 'invalid Google token' });
+  }
+});
+
+// Set HQ location (lat/lng + city/country label). Cosmetic only.
+app.post('/api/sethq', (req, res) => {
+  const { token, lat, lng, city, country } = req.body || {};
+  const u = userFromToken(token);
+  if (!u) return res.status(401).json({ error: 'not logged in' });
+  if (typeof lat !== 'number' || typeof lng !== 'number') return res.status(400).json({ error: 'lat/lng required' });
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return res.status(400).json({ error: 'invalid coordinates' });
+  u.hq = {
+    lat, lng,
+    city: (city || '').toString().slice(0, 60) || null,
+    country: (country || '').toString().slice(0, 60) || null,
+  };
+  res.json({ ok: true, hq: u.hq });
 });
 
 app.post('/api/setup', (req, res) => {
@@ -263,8 +344,10 @@ function publicUser(u) {
   const opCost = computeOpCost();
   return {
     username: u.username,
+    displayName: u.displayName || u.username,
     ticker: u.ticker,
     sector: u.sector,
+    hq: u.hq || null,
     cash: u.cash,
     shares: u.shares,
     stockPrice: u.stockPrice,
@@ -287,7 +370,9 @@ function leaderboard() {
     .map(u => ({
       ticker: u.ticker,
       username: u.username,
+      displayName: u.displayName || u.username,
       sector: u.sector,
+      hq: u.hq || null,
       stockPrice: u.stockPrice,
       marketCap: u.shares * u.stockPrice,
       bankrupt: u.bankrupt,
